@@ -2,7 +2,7 @@ import React from "react";
 
 const UserTable = ({ users, updateUser, deleteUser }) => {
     if (!Array.isArray(users)) {
-        console.error("Error: `users` is not an array:", users);
+        console.error("Error: users is not an array:", users);
         return <p>No users available.</p>;
     }
 
@@ -18,25 +18,28 @@ const UserTable = ({ users, updateUser, deleteUser }) => {
                     </tr>
                 </thead>
                 <tbody>
-                    {users.map((user) => {
-                        console.log("User object:", user); // ✅ Debugging line
-                        return (
-                            <tr key={user.id || user._id}>
-                                <td>{user.name}</td>
-                                <td>{user.email}</td>
-                                <td>{user.phone}</td>
-                                <td className="action-buttons">
-                                    <button className="update-btn" onClick={() => updateUser(user)}>Update</button>
-                                    <button 
-                                        className="delete-btn" 
-                                        onClick={() => deleteUser(user.id || user._id)} // ✅ Ensure a valid ID is passed
-                                    >
-                                        Delete
-                                    </button>
-                                </td>
-                            </tr>
-                        );
-                    })}
+                    {users.map((user) => (
+                        <tr key={user._id || user.id}>
+                            <td>{user.name}</td>
+                            <td>{user.email}</td>
+                            <td>{user.phone}</td>
+                            <td className="action-buttons">
+                                <button
+                                    className="update-btn"
+                                    onClick={() => updateUser(user)}
+                                >
+                                    Update
+                                </button>
+                                <span style={{ marginLeft: "8px" }} />
+                                <button
+                                    className="delete-btn"
+                                    onClick={() => deleteUser(user._id || user.id)}
+                                >
+                                    Delete
+                                </button>
+                            </td>
+                        </tr>
+                    ))}
                 </tbody>
             </table>
         </div>
@@ -44,4 +47,3 @@ const UserTable = ({ users, updateUser, deleteUser }) => {
 };
 
 export default UserTable;
-
