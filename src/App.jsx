@@ -252,7 +252,7 @@ function App() {
         </div>
       )}
 
-      <UserTable users={users} updateUser={updateUser} deleteUser={deleteUser} />
+        <UserTable users={users} updateUser={updateUser} deleteUser={deleteUser} role={role} />
     </div>
   );
 }
