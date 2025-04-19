@@ -39,7 +39,7 @@
 import React, { useState, useEffect } from "react";
 
 const UserForm = ({ addUser, editingUser }) => {
-    const [user, setUser] = useState({ name: "", email: "", phone: "" });
+    const [user, setUser] = useState({ name: "", email: "", phone: "", password:"" });
 
     // Pre-fill form when editing a user
     useEffect(() => {
@@ -66,7 +66,7 @@ const UserForm = ({ addUser, editingUser }) => {
         }
 
         addUser(user); // Call passed-in addUser or updateUser
-        setUser({ name: "", email: "", phone: "" }); // Clear form
+        setUser({ name: "", email: "", phone: "", password:"" }); // Clear form
     };
 
     return (
