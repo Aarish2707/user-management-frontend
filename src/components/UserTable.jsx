@@ -1,6 +1,6 @@
 import React from "react";
 
-const UserTable = ({ users, updateUser, deleteUser }) => {
+const UserTable = ({ users, updateUser, deleteUser,role }) => {
     if (!Array.isArray(users)) {
         console.error("Error: users is not an array:", users);
         return <p>No users available.</p>;
@@ -23,7 +23,7 @@ const UserTable = ({ users, updateUser, deleteUser }) => {
                             <td>{user.name}</td>
                             <td>{user.email}</td>
                             <td>{user.phone}</td>
-                            <td className="action-buttons">
+                            {/* <td className="action-buttons">
                                 <button
                                     className="update-btn"
                                     onClick={() => updateUser(user)}
@@ -37,7 +37,13 @@ const UserTable = ({ users, updateUser, deleteUser }) => {
                                 >
                                     Delete
                                 </button>
-                            </td>
+                            </td> */}
+                            {role === "admin" && (
+                <td className="action-buttons">
+                    <button className="update-btn" onClick={() => updateUser(user)}>Update</button>
+                    <button className="delete-btn" onClick={() => deleteUser(user._id)}>Delete</button>
+                </td>
+            )}
                         </tr>
                     ))}
                 </tbody>
