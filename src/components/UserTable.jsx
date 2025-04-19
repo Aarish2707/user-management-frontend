@@ -14,8 +14,7 @@ const UserTable = ({ users, updateUser, deleteUser,role }) => {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        <th>Actions</th>
-                    </tr>
+                        {role === "admin" && <th>Actions</th>}                    </tr>
                 </thead>
                 <tbody>
                     {users.map((user) => (
