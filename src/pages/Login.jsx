@@ -1,41 +1,53 @@
-import React, {useState} from "react";
-const login = ({ setIsAuthenticated }) => {
-    const [formData, setFormData] = useState({ email:"", password:"" });
+// src/pages/Login.jsx
+import React, { useState } from 'react';
 
-    const handleChange = (e) =>{
-        setFormData({ ...formData, [e.target.name]: e.target.value});
-    };
+const Login = ({ setToken }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
-    const handleLogin = async (e) => {
-        e.preventDefault();
-        try{
-            const res = await fetch("https://user-management-backend-2-9ynl.onrender.com/api/login", {
-                method: 'POST',
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            });
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch('https://user-management-backend-3-s5go.onrender.com/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
 
-            const data = await res.json();
-            if(res.ok){
-                localStorage.setItem("token",data.token);
-                setIsAuthenticated(true);
-            }
-            else{
-                alert(data.error || "Login Failed");
-            }
-        }
-        catch(err){
-            console.log("Login error:",err);
-        }
-    };
+      if (!res.ok) {
+        throw new Error("Login failed");
+      }
 
-    return (
-        <form onSubmit={handleLogin}>
-            <h2>Login</h2>
-            <input type="text" name="email" required placeholder="email" onChange={handleChange}/>
-            <input type="password" name="password" required placeholder="password" onChange={handleChange} />
-            <button type="submit">Login</button>
-        </form>
-    )
-}
+      const token = await res.json();
+      localStorage.setItem('token', token);
+      setToken(token);
+    } catch (error) {
+      alert('Invalid credentials!');
+    }
+  };
+
+  return (
+    <div className="container">
+      <h2>Login</h2>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          required
+          onChange={(e) => setEmail(e.target.value)}
+        /><br/>
+        <input
+          type="password"
+          placeholder="Password"
+          value={password}
+          required
+          onChange={(e) => setPassword(e.target.value)}
+        /><br/>
+        <button className="add-btn" type="submit">Login</button>
+      </form>
+    </div>
+  );
+};
+
 export default Login;
