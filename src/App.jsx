@@ -147,6 +147,7 @@ function App() {
     const token = localStorage.getItem("token");
     if (token) {
       const decoded = jwtDecode (token);
+      console.log("Decoded Token:", decoded); // ✅ Check if role is there
       setRole(decoded.role);
     }
     fetchUsers();
@@ -252,7 +253,12 @@ function App() {
         </div>
       )}
 
-        <UserTable users={users} updateUser={updateUser} deleteUser={deleteUser} role={role} />
+        <UserTable 
+            users={users} 
+            updateUser={updateUser} 
+            deleteUser={deleteUser}
+            role={role}
+        />
     </div>
   );
 }

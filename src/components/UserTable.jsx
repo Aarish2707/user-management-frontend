@@ -1,6 +1,7 @@
 import React from "react";
 
 const UserTable = ({ users, updateUser, deleteUser,role }) => {
+    console.log("Role abtained: ",role);
     if (!Array.isArray(users)) {
         console.error("Error: users is not an array:", users);
         return <p>No users available.</p>;
@@ -14,7 +15,7 @@ const UserTable = ({ users, updateUser, deleteUser,role }) => {
                         <th>Name</th>
                         <th>Email</th>
                         <th>Phone</th>
-                        {role === "admin" && <th>Actions</th>}                    </tr>
+                        {role === "admin" && <th>Actions</th>}                     </tr>
                 </thead>
                 <tbody>
                     {users.map((user) => (
