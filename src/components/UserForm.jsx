@@ -95,6 +95,12 @@ const UserForm = ({ addUser, editingUser }) => {
                 onChange={handleChange}
                 required
             />
+            <input type="password"
+            name="password"
+            placeholder="Enter Password"
+            value={user.password}
+            onChange={handleChange}
+            required />
             <button type="submit" className="add-btn">
                 {editingUser ? "Update User" : "Add User"}
             </button>
