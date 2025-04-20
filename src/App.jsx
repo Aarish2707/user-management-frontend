@@ -146,7 +146,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      const decoded = jwtDecode (token);
+      const decoded = jwt_decode (token);
       console.log("Decoded Token:", decoded); // ✅ Check if role is there
       setRole(decoded.role);
     }
