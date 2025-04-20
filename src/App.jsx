@@ -131,7 +131,7 @@ import UserForm from "./components/UserForm";
 import UserTable from "./components/UserTable";
 import Login from "./pages/Login";
 import "./styles/styles.css";
-import jwt_decode from "jwt-decode";
+import jwtDecode  from "jwt-decode";
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [users, setUsers] = useState([]);
@@ -146,7 +146,7 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      const decoded = jwt_decode (token);
+      const decoded = jwtDecode  (token);
       console.log("Decoded Token:", decoded); // ✅ Check if role is there
       setRole(decoded.role);
     }
