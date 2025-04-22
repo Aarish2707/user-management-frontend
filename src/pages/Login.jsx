@@ -1,4 +1,5 @@
 // src/pages/Login.jsx
+import { jwtDecode } from 'jwt-decode';
 import React, { useState } from 'react';
 
 const Login = ({ setToken }) => {
@@ -18,9 +19,14 @@ const Login = ({ setToken }) => {
         throw new Error("Login failed");
       }
 
-      const token = await res.json();
+      const data = await res.json();
+      const token = data.token || data;
       localStorage.setItem('token', token);
       setToken(token);
+
+      const decoded = jwtDecode(token);
+      console.log("ROle obtained:",decoded.role);
+      
     } catch (error) {
       alert('Invalid credentials!');
     }
