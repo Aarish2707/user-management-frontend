@@ -1,5 +1,5 @@
 // src/pages/Login.jsx
-import { jwtDecode } from 'jwt-decode';
+import  jwtDecode from 'jwt-decode';
 import React, { useState } from 'react';
 
 const Login = ({ setToken }) => {
