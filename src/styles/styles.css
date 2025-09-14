@@ -29,7 +29,7 @@ body {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  margin: auto;
+  margin-left: 50px;
 }
 
 .dashboard-header {
