@@ -1,200 +1,122 @@
-// import React, { useState, useEffect } from "react";
-// import UserForm from "./components/UserForm";
-// import UserTable from "./components/UserTable";
-// import Login from "./pages/Login";
-// import "./styles/styles.css";
-
-// function App() {
-//     const [users, setUsers] = useState([]);
-//     const [editingUser, setEditingUser] = useState(null); // State to track which user is being edited
-//     const [showForm, setShowForm] = useState(false); // Show/hide user form
-
-//     useEffect(() => {
-//         fetchUsers();
-//     }, []);
-
-//     const fetchUsers = async () => {
-//         try {
-//             const response = await fetch("https://user-management-backend-2-9ynl.onrender.com/api/users");
-//             const data = await response.json();
-//             if (Array.isArray(data)) {
-//                 setUsers(data);
-//             } else {
-//                 console.error("API returned non-array data:", data);
-//                 setUsers([]);
-//             }
-//         } catch (error) {
-//             console.error("Error fetching users:", error);
-//             setUsers([]);
-//         }
-//     };
-
-//     const addUser = async (user) => {
-//         try {
-//             const response = await fetch("https://user-management-backend-2-9ynl.onrender.com/api/users", {
-//                 method: "POST",
-//                 headers: { "Content-Type": "application/json" },
-//                 body: JSON.stringify(user),
-//             });
-//             if (response.ok) {
-//                 fetchUsers();
-//                 setShowForm(false); // Hide form after adding user
-//             }
-//         } catch (error) {
-//             console.error("Error adding user:", error);
-//         }
-//     };
-
-//     // ✅ Function to handle user update (Open form with user data)
-//     const updateUser = (user) => {
-//         setEditingUser(user); // Set user data in state
-//         setShowForm(true); // Show the form
-//     };
-
-//     // ✅ Function to save the updated user details
-//     const saveUpdatedUser = async (updatedUser) => {
-//         try {
-//             const response = await fetch(`https://user-management-backend-2-9ynl.onrender.com/api/users/${updatedUser.id || updatedUser._id}`, {
-//                 method: "PUT",
-//                 headers: { "Content-Type": "application/json" },
-//                 body: JSON.stringify(updatedUser),
-//             });
-
-//             if (response.ok) {
-//                 fetchUsers(); 
-//                 setShowForm(false); 
-//                 setEditingUser(null); 
-//             }
-//         } catch (error) {
-//             console.error("Error updating user:", error);
-//         }
-//     };
-
-//     // ✅ Function to delete a user
-//     const deleteUser = async (id) => {
-//         console.log("Deleting user with ID:", id); // ✅ Debugging line
-    
-//         if (!id) {
-//             console.error("Error: Invalid user ID received for deletion.");
-//             return;
-//         }
-    
-//         if (window.confirm("Are you sure you want to delete this user?")) {
-//             try {
-//                 const response = await fetch(`https://user-management-backend-2-9ynl.onrender.com/api/users/${id}`, {
-//                     method: "DELETE",
-//                 });
-    
-//                 if (!response.ok) {
-//                     throw new Error(`Error deleting user: ${response.status}`);
-//                 }
-    
-//                 setUsers(users.filter(user => user.id !== id && user._id !== id)); // ✅ Remove user from state
-//             } catch (error) {
-//                 console.error("Error deleting user:", error);
-//             }
-//         }
-//     };
-    
-
-//     return (
-//         <div className="container">
-//             <h1>User Management System</h1>
-
-//             {/* New User Button */}
-//             <button onClick={() => setShowForm(true)} className="new-user-btn">
-//                 {editingUser ? "Edit User" : "New User"}
-//             </button>
-
-//             {/* Modal for User Form */}
-//             {showForm && (
-//                 <div className="modal">
-//                     <div className="modal-content">
-//                         <span className="close-btn" onClick={() => setShowForm(false)}>&times;</span>
-//                         <UserForm 
-//                             addUser={editingUser ? saveUpdatedUser : addUser} 
-//                             editingUser={editingUser} 
-//                         />
-//                     </div>
-//                 </div>
-//             )}
-
-//             {/* User Table */}
-//             <UserTable users={users} updateUser={updateUser} deleteUser={deleteUser} />
-//         </div>
-//     );
-// }
-
-// export default App;
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import UserForm from "./components/UserForm";
 import UserTable from "./components/UserTable";
 import Login from "./pages/Login";
+import Dashboard from "./pages/Dashboard";
+import LoadingSpinner from "./components/LoadingSpinner";
+import ErrorBoundary from "./components/ErrorBoundary";
+import Notification from "./components/Notification";
 import "./styles/styles.css";
-import jwtDecode from "jwt-decode";
+
 function App() {
   const [token, setToken] = useState(localStorage.getItem("token"));
   const [users, setUsers] = useState([]);
   const [editingUser, setEditingUser] = useState(null);
   const [showForm, setShowForm] = useState(false);
-  const [role, setRole] = useState("");
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const [pagination, setPagination] = useState({
+    current: 1,
+    pages: 1,
+    total: 0
+  });
 
-  useEffect(() => {
-    if (token) fetchUsers();
-  }, [token]);
+  const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      const decoded = jwtDecode(token);
-      console.log("Decoded Token:", decoded); // Check for roles
-      setRole(decoded.role);
-    }
-    fetchUsers();
+  // Show notification
+  const showNotification = useCallback((message, type = 'info') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 5000);
   }, []);
-  
 
-  const fetchUsers = async () => {
+  // Fetch users with pagination and search
+  const fetchUsers = useCallback(async (page = 1, search = '') => {
+    if (!token) return;
+    
+    setLoading(true);
     try {
-      const response = await fetch("https://user-management-backend-3-s5go.onrender.com/api/users", {
+      const response = await fetch(`${API_BASE_URL}/api/users?page=${page}&limit=10&search=${search}`, {
         headers: {
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
       const data = await response.json();
-      setUsers(Array.isArray(data) ? data : []);
+      setUsers(data.users || []);
+      setPagination(data.pagination || { current: 1, pages: 1, total: 0 });
     } catch (error) {
       console.error("Error fetching users:", error);
+      showNotification("Failed to fetch users", "error");
+      setUsers([]);
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [token, API_BASE_URL, showNotification]);
 
-  const addUser = async (user) => {
+  // Get user info from token
+  useEffect(() => {
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        setUser({
+          id: payload.id,
+          email: payload.email,
+          role: payload.role,
+          name: payload.name
+        });
+        fetchUsers();
+      } catch (error) {
+        console.error('Invalid token:', error);
+        handleLogout();
+      }
+    }
+  }, [token, fetchUsers]);
+
+  const addUser = async (userData) => {
+    setLoading(true);
     try {
-      const res = await fetch("https://user-management-backend-3-s5go.onrender.com/api/users", {
+      const response = await fetch(`${API_BASE_URL}/api/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`
         },
-        body: JSON.stringify(user),
+        body: JSON.stringify(userData),
       });
-      if (res.ok) {
-        fetchUsers();
+
+      const result = await response.json();
+
+      if (response.ok) {
+        await fetchUsers();
         setShowForm(false);
+        showNotification("User created successfully", "success");
+      } else {
+        throw new Error(result.error || 'Failed to create user');
       }
     } catch (error) {
       console.error("Error adding user:", error);
+      showNotification(error.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateUser = (user) => {
-    setEditingUser(user);
+  const updateUser = (userData) => {
+    setEditingUser(userData);
     setShowForm(true);
   };
 
   const saveUpdatedUser = async (updatedUser) => {
+    setLoading(true);
     try {
-      const response = await fetch(`https://user-management-backend-3-s5go.onrender.com/api/users/${updatedUser._id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/users/${updatedUser._id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -203,27 +125,51 @@ function App() {
         body: JSON.stringify(updatedUser),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        fetchUsers();
+        await fetchUsers();
         setShowForm(false);
         setEditingUser(null);
+        showNotification("User updated successfully", "success");
+      } else {
+        throw new Error(result.error || 'Failed to update user');
       }
     } catch (error) {
       console.error("Error updating user:", error);
+      showNotification(error.message, "error");
+    } finally {
+      setLoading(false);
     }
   };
 
   const deleteUser = async (id) => {
     if (!id) return;
+    
     if (window.confirm("Are you sure you want to delete this user?")) {
+      setLoading(true);
       try {
-        await fetch(`https://user-management-backend-3-s5go.onrender.com/api/users/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/users/${id}`, {
           method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` }
+          headers: { 
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
         });
-        fetchUsers();
+
+        const result = await response.json();
+
+        if (response.ok) {
+          await fetchUsers();
+          showNotification("User deleted successfully", "success");
+        } else {
+          throw new Error(result.error || 'Failed to delete user');
+        }
       } catch (error) {
         console.error("Error deleting user:", error);
+        showNotification(error.message, "error");
+      } finally {
+        setLoading(false);
       }
     }
   };
@@ -231,35 +177,85 @@ function App() {
   const handleLogout = () => {
     localStorage.removeItem("token");
     setToken(null);
+    setUser(null);
+    setUsers([]);
+    showNotification("Logged out successfully", "info");
   };
 
-  if (!token) return <Login setToken={setToken} />;
+  const handleCloseForm = () => {
+    setShowForm(false);
+    setEditingUser(null);
+  };
+
+  if (!token) {
+    return (
+      <ErrorBoundary>
+        <Login setToken={setToken} showNotification={showNotification} />
+        {notification && (
+          <Notification 
+            message={notification.message} 
+            type={notification.type} 
+            onClose={() => setNotification(null)} 
+          />
+        )}
+      </ErrorBoundary>
+    );
+  }
 
   return (
-    <div className="container">
-      <h1>User Management System</h1>
-      <button onClick={handleLogout} className="delete-btn" style={{ float: "right" }}>Logout</button>
+    <ErrorBoundary>
+      <Router>
+        <div className="app">
+          {loading && <LoadingSpinner />}
+          
+          {notification && (
+            <Notification 
+              message={notification.message} 
+              type={notification.type} 
+              onClose={() => setNotification(null)} 
+            />
+          )}
 
-      <button onClick={() => setShowForm(true)} className="new-user-btn">
-        {editingUser ? "Edit User" : "New User"}
-      </button>
+          <Routes>
+            <Route path="/dashboard" element={
+              <Dashboard 
+                user={user}
+                users={users}
+                pagination={pagination}
+                onLogout={handleLogout}
+                onShowForm={() => setShowForm(true)}
+                onUpdateUser={updateUser}
+                onDeleteUser={deleteUser}
+                onFetchUsers={fetchUsers}
+                loading={loading}
+              />
+            } />
+            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          </Routes>
 
-      {showForm && (
-        <div className="modal">
-          <div className="modal-content">
-            <span className="close-btn" onClick={() => setShowForm(false)}>&times;</span>
-            <UserForm addUser={editingUser ? saveUpdatedUser : addUser} editingUser={editingUser} />
-          </div>
+          {/* Modal for User Form */}
+          {showForm && (
+            <div className="modal-overlay" onClick={handleCloseForm}>
+              <div className="modal-content" onClick={e => e.stopPropagation()}>
+                <div className="modal-header">
+                  <h3>{editingUser ? "Edit User" : "Add New User"}</h3>
+                  <button className="close-btn" onClick={handleCloseForm}>
+                    &times;
+                  </button>
+                </div>
+                <UserForm 
+                  addUser={editingUser ? saveUpdatedUser : addUser} 
+                  editingUser={editingUser}
+                  onCancel={handleCloseForm}
+                  loading={loading}
+                />
+              </div>
+            </div>
+          )}
         </div>
-      )}
-
-        <UserTable 
-            users={users} 
-            updateUser={updateUser} 
-            deleteUser={deleteUser}
-            role={role}
-        />
-    </div>
+      </Router>
+    </ErrorBoundary>
   );
 }
+
 export default App;
